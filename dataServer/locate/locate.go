@@ -1,0 +1,5 @@
+package locate
+
+func StartLocate()  {
+
+}
