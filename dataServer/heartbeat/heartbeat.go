@@ -1,47 +1,31 @@
 package heartbeat
 
 import (
-	"github.com/streadway/amqp"
-	"log"
+	"fmt"
+	"github.com/Shopify/sarama"
+	"go-storage/common"
 	"time"
 )
 
 func StartHeartbeat() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	failOnError(err, "conn rabbitmq")
-	defer conn.Close()
+	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForAll          // 发送完数据需要leader和follow都确认
+	config.Producer.Partitioner = sarama.NewRandomPartitioner // 新选出一个partition
+	config.Producer.Return.Successes = true                   // 成功交付的消息将在success channel返回
 
-	ch, err := conn.Channel()
-	failOnError(err, "rabbitmq channel")
-	defer ch.Close()
-
-	// 3. 声明消息要发送到的队列
-	q, err := ch.QueueDeclare(
-		"hello", // name
-		false,   // durable
-		false,   // delete when unused
-		false,   // exclusive
-		false,   // no-wait
-		nil,     // arguments
-	)
-	failOnError(err, "Failed to declare a queue")
+	// 构造一个消息
+	msg := &sarama.ProducerMessage{}
+	msg.Topic = "apiServers"
+	msg.Value = sarama.StringEncoder("127.0.0.1:8888")
+	// 连接kafka
+	client, err := sarama.NewSyncProducer([]string{"127.0.0.1:9092"}, config)
+	common.FailOnError(err, "producer closed, err:")
+	defer client.Close()
 
 	for {
-		err = ch.Publish(
-			"apiServers", // exchange
-			q.Name,       // routing key
-			false,        // mandatory
-			false,        // immediate
-			amqp.Publishing{
-				ContentType: "text/plain",
-				Body:        []byte("127.0.0.1:8888"),
-			})
+		// 间隔5s发送消息
+		pid, offset, err := client.SendMessage(msg)
+		fmt.Printf("pid:%v offset:%v err:%v \n", pid, offset, err)
 		time.Sleep(5 * time.Second)
-	}
-}
-
-func failOnError(err error, msg string) {
-	if err != nil {
-		log.Fatalf("%s: %s", msg, err)
 	}
 }

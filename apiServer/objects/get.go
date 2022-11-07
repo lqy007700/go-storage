@@ -1,4 +1,4 @@
-package storage
+package objects
 
 import (
 	"io"
@@ -17,5 +17,5 @@ func get(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	io.Copy(w,open)
+	io.Copy(w, open)
 }

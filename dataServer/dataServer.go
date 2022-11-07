@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-storage/dataServer/heartbeat"
+	"go-storage/dataServer/locate"
 	"go-storage/storage"
 	"log"
 	"net/http"
