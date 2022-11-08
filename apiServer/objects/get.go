@@ -1,21 +1,30 @@
 package objects
 
 import (
+	"errors"
+	"go-storage/apiServer/locate"
+	"go-storage/lib/objectstream"
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 )
 
 func get(w http.ResponseWriter, r *http.Request) {
-	root := "/Users/lqy007700/Data/storage"
-	open, err := os.Open(root + "/objects/" + strings.Split(r.URL.EscapedPath(), "/")[2])
-	defer open.Close()
+	object := strings.Split(r.URL.EscapedPath(), "/")[2]
+	stream, err := getStream(object)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	io.Copy(w, open)
+	io.Copy(w, stream)
+}
+
+func getStream(object string) (io.Reader, error) {
+	server := locate.Locate(object)
+	if server == "" {
+		return nil, errors.New("onject fail")
+	}
+	return objectstream.NewGetStream(server, object)
 }
