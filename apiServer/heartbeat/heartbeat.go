@@ -23,6 +23,7 @@ func ListenHeartbeat() {
 	c := mq.Consume()
 	go removeExpiredDataServer()
 
+	// 接收心跳包
 	for msg := range c {
 		addr, err := strconv.Unquote(string(msg.Body))
 		common.FailOnError(err, "Unquote fail")

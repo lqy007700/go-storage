@@ -12,8 +12,9 @@ func Locate(name string) bool {
 	return !os.IsNotExist(err)
 }
 
+// StartLocate 查看本机是否有对应存储，有则返回本机地址
 func StartLocate() {
-	mq := rabbitmq.New("127.0.0.1")
+	mq := rabbitmq.New(os.Getenv("RABBITMQ_SERVER"))
 	defer mq.Close()
 	mq.Bind("dataServers")
 	m := mq.Consume()
